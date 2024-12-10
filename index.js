@@ -2,18 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
-app.use(cors());
-
-app.use(express.json());
-app.use(requestLogger);
-function requestLogger(req, res, next) {
-  console.log("Method:", req.method);
-  console.log("Path:", req.path);
-  console.log("Body:", req.body);
-  console.log("----");
-  next();
-}
-
 let notes = [
   {
     id: "1",
@@ -31,6 +19,28 @@ let notes = [
     important: true,
   },
 ];
+
+app.use(cors());
+app.use(express.static("dist"));
+app.use(express.json());
+app.use(requestLogger);
+
+function requestLogger(req, res, next) {
+  console.log("Method:", req.method);
+  console.log("Path:", req.path);
+  console.log("Body:", req.body);
+  console.log("----");
+  next();
+}
+
+function unknownEndpoint(req, res) {
+  res.status(404).send({ error: "unknown endpoint" });
+}
+
+function generateId() {
+  const maxId = notes.length > 0 ? Math.max(...notes.map((n) => +n.id)) : 0;
+  return `${maxId + 1}`;
+}
 
 app.get("/", (req, res) => {
   res.send("<h1>Hello world</h1>");
@@ -50,11 +60,6 @@ app.get("/api/notes/:id", (req, res) => {
     res.status(404).end();
   }
 });
-
-function generateId() {
-  const maxId = notes.length > 0 ? Math.max(...notes.map((n) => +n.id)) : 0;
-  return `${maxId + 1}`;
-}
 
 app.post("/api/notes", (req, res) => {
   const body = req.body;
@@ -78,10 +83,6 @@ app.delete("/api/notes/:id", (req, res) => {
   notes.filter((notes) => notes.id !== id);
   res.status(204).end();
 });
-
-function unknownEndpoint(req, res) {
-  res.status(404).send({ error: "unknown endpoint" });
-}
 
 app.use(unknownEndpoint);
 
